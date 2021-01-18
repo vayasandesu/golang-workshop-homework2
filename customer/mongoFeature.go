@@ -41,7 +41,7 @@ func (feature *CustomerService) ChangePassword(email string, oldPassword string,
 	collection := feature.Resource.Collection("Users")
 
 	_, err = collection.UpdateOne(ctx,
-		bson.M{"id": user.ID, "email": user.Email},
+		bson.M{"email": user.Email},
 		bson.M{"password": newPassword})
 
 	return err
@@ -55,6 +55,22 @@ func (feature *CustomerService) GetProfile(email string) (User, error) {
 	}
 
 	return output, err
+}
+
+func (feature *CustomerService) UpdateProfile(email string, name string) error {
+	user, err := feature.getUser(email)
+	if err != nil {
+		return err
+	}
+
+	ctx, _ := initContext()
+	collection := feature.Resource.Collection("Users")
+
+	_, err = collection.UpdateOne(ctx,
+		bson.M{"email": user.Email},
+		bson.M{"name": name})
+
+	return err
 }
 
 func (feature *CustomerService) Register(email string, password string, name string) error {
@@ -88,7 +104,7 @@ func (feature *CustomerService) getUser(email string) (User, error) {
 	var data User
 	ctx, _ := initContext()
 	collection := feature.Resource.Collection("Users")
-	c := collection.FindOne(ctx, bson.M{email: email})
+	c := collection.FindOne(ctx, bson.M{"email": email})
 	c.Decode(&data)
 
 	return data, c.Err()
