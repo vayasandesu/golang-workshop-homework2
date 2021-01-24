@@ -23,9 +23,6 @@ func (handler *EchoHandler) Start() {
 	app := echo.New()
 	handler.app = app
 
-	// app.Use(middleware.Logger())
-	// app.Use(middleware.Recover())
-
 	app.POST("/user", handler.register())
 	app.POST("/user/login", handler.login())
 	app.PUT("/user/password", handler.changePassword(), middleware.JWT([]byte("secret")))
@@ -70,7 +67,12 @@ func (handler *EchoHandler) login() func(context echo.Context) error {
 			return echo.ErrUnauthorized
 		}
 
-		return createToken(data.Email, context)
+		token, err := createToken(data.Email, context)
+		if err != nil {
+			return err
+		}
+
+		return context.JSON(http.StatusOK, token)
 	}
 }
 
@@ -78,8 +80,12 @@ func (handler *EchoHandler) changePassword() func(context echo.Context) error {
 	service := handler.Service
 
 	return func(context echo.Context) error {
+		email, err := getTokenEmail(context)
+		if err != nil {
+			return echo.ErrUnauthorized
+		}
+
 		var data = struct {
-			Email       string `tag:"email"`
 			OldPassword string `json:"password"`
 			NewPassword string `json:"newpassword"`
 		}{}
@@ -87,7 +93,7 @@ func (handler *EchoHandler) changePassword() func(context echo.Context) error {
 		body, _ := ioutil.ReadAll(context.Request().Body)
 		json.Unmarshal(body, &data)
 
-		err := service.ChangePassword(data.Email, data.OldPassword, data.NewPassword)
+		err = service.ChangePassword(email, data.OldPassword, data.NewPassword)
 		if err != nil {
 			return err
 		}
@@ -99,8 +105,12 @@ func (handler *EchoHandler) getProfile() func(context echo.Context) error {
 	service := handler.Service
 
 	return func(context echo.Context) error {
-		value := context.Param("email")
-		user, err := service.GetProfile(value)
+		email, err := getTokenEmail(context)
+		if err != nil {
+			return echo.ErrUnauthorized
+		}
+
+		user, err := service.GetProfile(email)
 		if err != nil {
 			return err
 		}
@@ -112,15 +122,19 @@ func (handler *EchoHandler) editProfile() func(context echo.Context) error {
 	service := handler.Service
 
 	return func(context echo.Context) error {
+		email, err := getTokenEmail(context)
+		if err != nil {
+			return echo.ErrUnauthorized
+		}
+
 		var data = struct {
-			Email string `tag:"email"`
-			Name  string `json:"name"`
+			Name string `json:"name"`
 		}{}
 
 		body, _ := ioutil.ReadAll(context.Request().Body)
 		json.Unmarshal(body, &data)
 
-		err := service.UpdateProfile(data.Email, data.Name)
+		err = service.UpdateProfile(email, data.Name)
 		if err != nil {
 			return err
 		}
@@ -128,23 +142,32 @@ func (handler *EchoHandler) editProfile() func(context echo.Context) error {
 	}
 }
 
-func createToken(email string, context echo.Context) error {
+func getTokenEmail(context echo.Context) (string, error) {
+	temp := context.Get("user")
+	if temp == nil {
+		return "", echo.ErrUnauthorized
+	}
+	user := temp.(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	return claims["email"].(string), nil
+}
+
+func createToken(email string, context echo.Context) (map[string]string, error) {
 	// Create token
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = email
-	claims["admin"] = false
+	claims["email"] = email
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		return err
+		return map[string]string{}, err
 	}
 
-	return context.JSON(http.StatusOK, map[string]string{
+	return map[string]string{
 		"token": t,
-	})
+	}, nil
 }
