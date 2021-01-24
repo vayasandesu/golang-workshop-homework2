@@ -67,6 +67,18 @@ func (handler *EchoHandler) register() func(context echo.Context) error {
 	}
 }
 
+// Login godoc
+// @Summary Login
+// @Description Login and get token
+// @Accept  json
+// @Produce  json
+// @Param email body string true "email"
+// @Param password body string true "password"
+// @Success 200 {object} string "{"token" : value}"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 400,404 {object} object httputil.HTTPError
+// @Failure 500 {object} object httputil.HTTPError
+// @Router /user/login [post]
 func (handler *EchoHandler) login() func(context echo.Context) error {
 	service := handler.Service
 
