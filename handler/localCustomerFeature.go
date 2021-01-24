@@ -1,4 +1,4 @@
-package tests
+package handler
 
 import (
 	"goworkshop2/customer"

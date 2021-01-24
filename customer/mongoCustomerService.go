@@ -9,7 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type MongoCustomer struct {
+// customer service with mongo db database
+type MongoCustomerService struct {
 	Resource *mongo.Database
 }
 
@@ -18,7 +19,8 @@ func initContext() (context.Context, context.CancelFunc) {
 	return ctx, cancel
 }
 
-func (feature *MongoCustomer) Login(email string, password string) (bool, error) {
+// Check login
+func (feature *MongoCustomerService) Login(email string, password string) (bool, error) {
 	user, err := feature.getUser(email)
 	if err == nil {
 		return (user.Password == password), err
@@ -27,7 +29,7 @@ func (feature *MongoCustomer) Login(email string, password string) (bool, error)
 	}
 }
 
-func (feature *MongoCustomer) GetProfile(email string) (User, error) {
+func (feature *MongoCustomerService) GetProfile(email string) (User, error) {
 	user, err := feature.getUser(email)
 	output := User{
 		Email: user.Email,
@@ -37,7 +39,7 @@ func (feature *MongoCustomer) GetProfile(email string) (User, error) {
 	return output, err
 }
 
-func (feature *MongoCustomer) UpdateProfile(email string, name string) error {
+func (feature *MongoCustomerService) UpdateProfile(email string, name string) error {
 	user, err := feature.getUser(email)
 	if err != nil {
 		return err
@@ -58,7 +60,7 @@ func (feature *MongoCustomer) UpdateProfile(email string, name string) error {
 	return err
 }
 
-func (feature *MongoCustomer) ChangePassword(email string, oldPassword string, newPassword string) error {
+func (feature *MongoCustomerService) ChangePassword(email string, oldPassword string, newPassword string) error {
 	user, err := feature.getUser(email)
 	if err != nil {
 		return err
@@ -83,7 +85,7 @@ func (feature *MongoCustomer) ChangePassword(email string, oldPassword string, n
 	return err
 }
 
-func (feature *MongoCustomer) Register(email string, password string, name string) error {
+func (feature *MongoCustomerService) Register(email string, password string, name string) error {
 	if feature.isExist(email) {
 		return errors.New("Email already exist")
 	}
@@ -101,7 +103,7 @@ func (feature *MongoCustomer) Register(email string, password string, name strin
 	return err
 }
 
-func (feature *MongoCustomer) isExist(email string) bool {
+func (feature *MongoCustomerService) isExist(email string) bool {
 	user, err := feature.getUser(email)
 	if err == nil && user.Email == email {
 		return true
@@ -110,7 +112,7 @@ func (feature *MongoCustomer) isExist(email string) bool {
 	}
 }
 
-func (feature *MongoCustomer) getUser(email string) (User, error) {
+func (feature *MongoCustomerService) getUser(email string) (User, error) {
 	var data User
 	ctx, _ := initContext()
 	collection := feature.Resource.Collection("Users")

@@ -1,9 +1,10 @@
-package customer
+package handler
 
 import (
 	"encoding/json"
 	"fmt"
 	"goworkshop2/customer"
+	"goworkshop2/docs"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -14,7 +15,7 @@ import (
 )
 
 type EchoHandler struct {
-	Service customer.CustomerFeature
+	Service customer.MongoCustomerService
 	app     *echo.Echo
 	Port    string
 }
@@ -22,6 +23,15 @@ type EchoHandler struct {
 func (handler *EchoHandler) Start() {
 	app := echo.New()
 	handler.app = app
+
+	docs.SwaggerInfo.Title = "Swagger Example API"
+	docs.SwaggerInfo.Description = "This is a sample server Petstore server."
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "petstore.swagger.io"
+	docs.SwaggerInfo.BasePath = "/v2"
+	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+
+	app.GET("/swagger/*any", echo.WrapHandler(swaggerFiles.Handler))
 
 	app.POST("/user", handler.register())
 	app.POST("/user/login", handler.login())
@@ -32,6 +42,19 @@ func (handler *EchoHandler) Start() {
 	app.Logger.Fatal(app.Start(":" + handler.Port))
 }
 
+// Register godoc
+// @Summary Register
+// @Description Register new account
+// @Accept  json
+// @Produce  json
+// @Param email body string
+// @Param password body string
+// @Param name body string
+// @Success 200 {string} "success"
+// @Failure 200 {string} "fail email already exist"
+// @Failure 400,404 {object} httputil.HTTPError
+// @Failure 500 {object} httputil.HTTPError
+// @Router /user/register [post]
 func (handler *EchoHandler) register() func(context echo.Context) error {
 	service := handler.Service
 	return func(context echo.Context) error {

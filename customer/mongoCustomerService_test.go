@@ -10,7 +10,7 @@ import (
 )
 
 type MongoCustomerTester struct {
-	Service  MongoCustomer
+	Service  MongoCustomerService
 	Database storage.MongoDb
 }
 
@@ -33,7 +33,7 @@ func setup() MongoCustomerTester {
 	}
 	db, _ := storage.CreateDatabase(&dbConfig)
 
-	service := MongoCustomer{
+	service := MongoCustomerService{
 		Resource: db.Resource,
 	}
 

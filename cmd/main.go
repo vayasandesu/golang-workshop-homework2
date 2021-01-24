@@ -1,8 +1,8 @@
 package main
 
 import (
-	customer "goworkshop2/customer"
-	handler "goworkshop2/customer/handler"
+	"goworkshop2/customer"
+	"goworkshop2/handler"
 	"goworkshop2/storage"
 )
 

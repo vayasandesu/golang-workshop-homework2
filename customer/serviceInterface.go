@@ -1,6 +1,7 @@
 package customer
 
-type FeatureInterface interface {
+// standard customer service interface
+type ServiceInterface interface {
 	Login(email string, password string) (bool, error)
 	ChangePassword(email string, oldPassword string, newPassword string) error
 	GetProfile(email string) (User, error)
