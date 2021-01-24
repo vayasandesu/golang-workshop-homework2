@@ -2,15 +2,17 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+const DEFAULT_CONNECTION_STRING_FORMAT string = "mongodb://%s:%s@%s"
 
 type MongoDbConfiguration struct {
 	ConnectionTimeout        time.Duration
@@ -20,15 +22,6 @@ type MongoDbConfiguration struct {
 type MongoDb struct {
 	Config   MongoDbConfiguration
 	Resource *mongo.Database
-}
-
-func getContext(timeout time.Duration) context.Context {
-	ctx, err := context.WithTimeout(context.Background(), timeout*time.Second)
-	if err != nil {
-		return nil
-	}
-
-	return ctx
 }
 
 func CreateDatabase(config *MongoDbConfiguration) (MongoDb, error) {
@@ -67,21 +60,19 @@ func CreateDatabase(config *MongoDbConfiguration) (MongoDb, error) {
 }
 
 func (db *MongoDb) DropAll() error {
-	config := db.Config
 	resource := db.Resource
 
-	ctx, err := context.WithTimeout(context.Background(), config.ConnectionTimeout*time.Second)
-	if err != nil {
-		return errors.New("cannot drop database")
+	collections, _ := resource.ListCollectionNames(context.TODO(), bson.D{{}})
+	for _, name := range collections {
+		_, err := resource.Collection(name).DeleteMany(context.TODO(), bson.M{})
+		if err != nil {
+			return err
+		}
 	}
 
-	return resource.Drop(ctx)
+	return nil
 }
 
 func (db *MongoDb) Close() {
-	config := db.Config
-	ctx := getContext(config.ConnectionTimeout)
-	if ctx != nil {
-		db.Resource.Client().Disconnect(ctx)
-	}
+	db.Resource.Client().Disconnect(context.TODO())
 }
