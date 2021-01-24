@@ -14,7 +14,7 @@ import (
 )
 
 type EchoHandler struct {
-	Service customer.Feature
+	Service customer.CustomerFeature
 	app     *echo.Echo
 	Port    string
 }

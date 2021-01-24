@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -21,8 +22,19 @@ type MongoDb struct {
 	Resource *mongo.Database
 }
 
-func (db *MongoDb) InitializeResource() error {
-	config := db.Config
+func getContext(timeout time.Duration) context.Context {
+	ctx, err := context.WithTimeout(context.Background(), timeout*time.Second)
+	if err != nil {
+		return nil
+	}
+
+	return ctx
+}
+
+func CreateDatabase(config *MongoDbConfiguration) (MongoDb, error) {
+	db := MongoDb{
+		Config: *config,
+	}
 	username := os.Getenv("MONGODB_USERNAME")
 	password := os.Getenv("MONGODB_PASSWORD")
 	dbName := os.Getenv("MONGODB_DB_NAME")
@@ -32,7 +44,7 @@ func (db *MongoDb) InitializeResource() error {
 	client, err := mongo.NewClient(options.Client().ApplyURI(connectionURI))
 	if err != nil {
 		logrus.Errorf("Failed to create client: %v", err)
-		return err
+		return db, err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), config.ConnectionTimeout*time.Second)
 	defer cancel()
@@ -40,22 +52,36 @@ func (db *MongoDb) InitializeResource() error {
 	err = client.Connect(ctx)
 	if err != nil {
 		logrus.Errorf("Failed to connect to server: %v", err)
-		return err
+		return db, err
 	}
 
 	// Force a connection to verify our connection string
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		logrus.Errorf("Failed to ping cluster: %v", err)
-		return err
+		return db, err
 	}
 
 	db.Resource = client.Database(dbName)
-	db.Resource.Drop(ctx)
-	return nil
+	return db, nil
+}
+
+func (db *MongoDb) DropAll() error {
+	config := db.Config
+	resource := db.Resource
+
+	ctx, err := context.WithTimeout(context.Background(), config.ConnectionTimeout*time.Second)
+	if err != nil {
+		return errors.New("cannot drop database")
+	}
+
+	return resource.Drop(ctx)
 }
 
 func (db *MongoDb) Close() {
-	db.Close()
-	logrus.Warning("Closing all db connections")
+	config := db.Config
+	ctx := getContext(config.ConnectionTimeout)
+	if ctx != nil {
+		db.Resource.Client().Disconnect(ctx)
+	}
 }
