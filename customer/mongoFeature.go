@@ -39,10 +39,15 @@ func (feature *CustomerService) ChangePassword(email string, oldPassword string,
 
 	ctx, _ := initContext()
 	collection := feature.Resource.Collection("Users")
+	update := bson.M{
+		"$set": bson.M{
+			"password": newPassword,
+		},
+	}
 
 	_, err = collection.UpdateOne(ctx,
 		bson.M{"email": user.Email},
-		bson.M{"password": newPassword})
+		update)
 
 	return err
 }
@@ -65,10 +70,15 @@ func (feature *CustomerService) UpdateProfile(email string, name string) error {
 
 	ctx, _ := initContext()
 	collection := feature.Resource.Collection("Users")
-
+	update := bson.M{
+		"$set": bson.M{
+			"name": name,
+		},
+	}
 	_, err = collection.UpdateOne(ctx,
 		bson.M{"email": user.Email},
-		bson.M{"name": name})
+		update,
+	)
 
 	return err
 }

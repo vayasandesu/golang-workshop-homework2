@@ -51,9 +51,11 @@ func (db *MongoDb) InitializeResource() error {
 	}
 
 	db.Resource = client.Database(dbName)
+	db.Resource.Drop(ctx)
 	return nil
 }
 
 func (db *MongoDb) Close() {
+	db.Close()
 	logrus.Warning("Closing all db connections")
 }
