@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"goworkshop2/customer"
-	"goworkshop2/docs"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	_ "goworkshop2/docs"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type EchoHandler struct {
-	Service customer.MongoCustomerService
+	Service customer.ServiceInterface
 	app     *echo.Echo
 	Port    string
 }
@@ -24,14 +26,7 @@ func (handler *EchoHandler) Start() {
 	app := echo.New()
 	handler.app = app
 
-	docs.SwaggerInfo.Title = "Swagger Example API"
-	docs.SwaggerInfo.Description = "This is a sample server Petstore server."
-	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "petstore.swagger.io"
-	docs.SwaggerInfo.BasePath = "/v2"
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
-
-	app.GET("/swagger/*any", echo.WrapHandler(swaggerFiles.Handler))
+	app.GET("/swagger/*any", echoSwagger.WrapHandler)
 
 	app.POST("/user", handler.register())
 	app.POST("/user/login", handler.login())
@@ -47,16 +42,17 @@ func (handler *EchoHandler) Start() {
 // @Description Register new account
 // @Accept  json
 // @Produce  json
-// @Param email body string
-// @Param password body string
-// @Param name body string
-// @Success 200 {string} "success"
-// @Failure 200 {string} "fail email already exist"
-// @Failure 400,404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
+// @Param email body string true "email"
+// @Param password body string true "password"
+// @Param name body string true "name of user"
+// @Success 200 {string} string "success"
+// @Failure 200 {string} string "fail email already exist"
+// @Failure 400,404 {object} object httputil.HTTPError
+// @Failure 500 {object} object httputil.HTTPError
 // @Router /user/register [post]
 func (handler *EchoHandler) register() func(context echo.Context) error {
 	service := handler.Service
+
 	return func(context echo.Context) error {
 		var data customer.User
 

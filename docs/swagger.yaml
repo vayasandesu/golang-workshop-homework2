@@ -1,4 +1,56 @@
+basePath: /
 info:
-  contact: {}
-paths: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: sample swagger with some api XD
+  termsOfService: http://swagger.io/terms/
+  title: Goworkshop example api
+  version: "1.0"
+paths:
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register new account
+      parameters:
+      - description: email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      - description: name of user
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: fail email already exist
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: object
+        "404":
+          description: Bad Request
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: Register
 swagger: "2.0"

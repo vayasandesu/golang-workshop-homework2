@@ -6,6 +6,16 @@ import (
 	"goworkshop2/storage"
 )
 
+// @title Goworkshop example api
+// @version 1.0
+// @description sample swagger with some api XD
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @BasePath /
 func main() {
 	config := storage.MongoDbConfiguration{
 		ConnectionTimeout:        5,
@@ -13,7 +23,7 @@ func main() {
 	}
 	db, _ := storage.CreateDatabase(&config)
 
-	service := customer.MongoCustomer{
+	service := customer.MongoCustomerService{
 		Resource: db.Resource,
 	}
 

@@ -15,6 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/swaggo/echo-swagger v1.1.0
 	github.com/swaggo/swag v1.7.0
 	go.mongodb.org/mongo-driver v1.4.5
 	golang.org/x/mod v0.4.1 // indirect
